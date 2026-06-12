@@ -2,13 +2,11 @@ name: Check Tennis Courts
 
 on:
   schedule:
-    - cron: '0 21 * * *' # 例: 毎日朝6時(JST)に実行
-  workflow_dispatch: # 手動実行用
+    - cron: '0 21 * * *' # 毎日定時に実行（必要に応じて調整してください）
+  workflow_dispatch: # 手動実行ボタン用
 
-# 💡 ここに環境変数を追加して、GitHubのアクションをNode 24で強制実行する
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # もし他にシークレット（TOSHIMA_IDなど）をここに書いていればそのまま残す
 
 jobs:
   check-courts:
@@ -20,11 +18,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24 # 💡 ここを 20 から 24 に変更
+          node-version: 24
 
       - name: Install dependencies
         run: |
-          npm ci
+          npm install
           npx playwright install chromium
 
       - name: Run script
