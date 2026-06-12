@@ -136,7 +136,7 @@ async function checkToshima(browser, targetDates) {
 }
 
 async function checkSumida(browser, targetDates) {
-  if (!SUMIDA_ID || !SUMIDA_PW) { console.log("[墨田区] 未設定 → スキップ"); return []; }
+  console.log("[墨田区] 現在対応準備中 → スキップ"); return [];
   const BASE = "https://yoyaku03.city.sumida.lg.jp/user";
   const ctx = await browser.newContext({ userAgent: "Mozilla/5.0 Chrome/120" });
   const page = await ctx.newPage();
