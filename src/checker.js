@@ -57,9 +57,7 @@ function getTargetDates(days = 60) {
   return dates;
 }
 
-// ==========================================
 // 都営スポレク
-// ==========================================
 async function checkSporec(browser, targetDates) {
   if (!SPOREC_ID || !SPOREC_PW) { console.log("[スポレク] 未設定 → スキップ"); return []; }
   console.log("[スポレク] 処理開始...");
@@ -106,9 +104,7 @@ async function checkSporec(browser, targetDates) {
   return results;
 }
 
-// ==========================================
-// 豊島区 (ログイン処理修正)
-// ==========================================
+// 豊島区
 async function checkToshima(browser, targetDates) {
   if (!TOSHIMA_ID || !TOSHIMA_PW) { console.log("[豊島区] 未設定 → スキップ"); return []; }
   console.log("[豊島区] 処理開始...");
@@ -118,19 +114,12 @@ async function checkToshima(browser, targetDates) {
   const results = TOSHIMA_COURTS.map(c => ({ name: c.name, system: "豊島区", vacancies: [] }));
   
   try {
-    // 1. トップ（モード選択）画面へ移動
     await page.goto(`${BASE}/Home/WgR_ModeSelect`);
     await page.waitForLoadState("networkidle");
-    
-    // 2. 画面内の「ログイン」ボタンをクリック
     await page.click('a:has-text("ログイン"), button:has-text("ログイン")');
     await page.waitForLoadState("networkidle");
-    
-    // 3. ログイン画面で、表示されている入力欄にID/PWを入力
     await page.locator('input[type="text"]:visible').fill(TOSHIMA_ID);
     await page.fill('input[type="password"]', TOSHIMA_PW);
-    
-    // 4. ログイン実行
     await page.click('button:has-text("ログイン"), input[type="submit"], #loginBtn');
     await page.waitForNavigation({ waitUntil: "networkidle" }).catch(() => {});
     
@@ -140,7 +129,6 @@ async function checkToshima(browser, targetDates) {
       const court = TOSHIMA_COURTS[i];
       for (const date of targetDates) {
         try {
-          // ⚠️注意: 自治体システムによってはURL直叩きがエラーになる場合があります
           await page.goto(`${BASE}/vacant?facility=${court.facilityCode}&date=${date}`, { waitUntil: "networkidle", timeout: 15000 });
           const slots = await page.evaluate((ts) => {
             const found = [];
@@ -163,9 +151,7 @@ async function checkToshima(browser, targetDates) {
   return results;
 }
 
-// ==========================================
-// 墨田区 (スキップ解除・ログイン実装)
-// ==========================================
+// 墨田区
 async function checkSumida(browser, targetDates) {
   if (!SUMIDA_ID || !SUMIDA_PW) { console.log("[墨田区] 未設定 → スキップ"); return []; }
   console.log("[墨田区] 処理開始...");
@@ -175,19 +161,12 @@ async function checkSumida(browser, targetDates) {
   const results = SUMIDA_COURTS.map(c => ({ name: c.name, system: "墨田区", vacancies: [] }));
   
   try {
-    // 1. トップページへ移動
     await page.goto(`${BASE}/Home`);
     await page.waitForLoadState("networkidle");
-    
-    // 2. ログインボタンをクリック
     await page.click('a:has-text("ログイン"), button:has-text("ログイン")');
     await page.waitForLoadState("networkidle");
-    
-    // 3. IDとパスワードを入力 (一般的な自治体システムの要素名に合わせ、念のためIDとName両方に対応)
     await page.fill('input[id="userId"], input[name="userId"], input[id="txtUserId"]', SUMIDA_ID);
     await page.fill('input[type="password"]', SUMIDA_PW);
-    
-    // 4. ログイン実行
     await page.click('button:has-text("ログイン"), input[type="submit"]');
     await page.waitForNavigation({ waitUntil: "networkidle" }).catch(() => {});
     
@@ -197,7 +176,6 @@ async function checkSumida(browser, targetDates) {
       const court = SUMIDA_COURTS[i];
       for (const date of targetDates) {
         try {
-          // ⚠️注意: 自治体システムによってはURL直叩きがエラーになる場合があります
           await page.goto(`${BASE}/VacantSearch?facility=${court.facilityCode}&date=${date}`, { waitUntil: "networkidle", timeout: 15000 });
           const slots = await page.evaluate((ts) => {
             const found = [];
@@ -220,9 +198,7 @@ async function checkSumida(browser, targetDates) {
   return results;
 }
 
-// ==========================================
 // 千代田区
-// ==========================================
 async function checkChiyoda(browser, targetDates) {
   if (!CHIYODA_ID || !CHIYODA_PW) { console.log("[千代田区] 未設定 → スキップ"); return []; }
   console.log("[千代田区] 処理開始...");
@@ -267,9 +243,7 @@ async function checkChiyoda(browser, targetDates) {
   return results;
 }
 
-// ==========================================
-// メイン実行処理 (直列実行へ変更)
-// ==========================================
+// メイン実行
 (async () => {
   const browser = await chromium.launch({ headless: true });
   const targetDates = getTargetDates(60);
@@ -278,7 +252,6 @@ async function checkChiyoda(browser, targetDates) {
   let allCourts = [];
   
   try {
-    // 順番に実行することで、ブラウザのセッション競合を防ぎ、ログを追いやすくします
     const r1 = await checkSporec(browser, targetDates);
     const r2 = await checkToshima(browser, targetDates);
     const r3 = await checkSumida(browser, targetDates);
@@ -291,11 +264,9 @@ async function checkChiyoda(browser, targetDates) {
     await browser.close();
   }
   
-  // 結果の保存処理
   const output = { updatedAt: new Date().toISOString(), courts: allCourts };
   const outPath = path.join(__dirname, "../docs/results.json");
   
-  // ディレクトリが存在しない場合は作成
   const dirPath = path.dirname(outPath);
   if (!fs.existsSync(dirPath)){
     fs.mkdirSync(dirPath, { recursive: true });
