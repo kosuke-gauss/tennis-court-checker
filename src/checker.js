@@ -142,11 +142,14 @@ async function checkSumida(browser, targetDates) {
   const page = await ctx.newPage();
   const results = SUMIDA_COURTS.map(c => ({ name: c.name, system: "墨田区", vacancies: [] }));
   try {
-    await page.goto(`${BASE}/Login`);
-    await page.fill('input[type="text"]', SUMIDA_ID);
-    await page.fill('input[type="password"]', SUMIDA_PW);
-    await page.click('button[type="submit"], input[type="submit"]');
-    await page.waitForNavigation({ waitUntil: "networkidle" }).catch(() => {});
+await page.goto(`${BASE}/Home`);
+await page.waitForLoadState("networkidle");
+await page.click('a:has-text("ログイン")');
+await page.waitForLoadState("networkidle");
+await page.fill('input[name="userId"], input[id="userId"]', SUMIDA_ID);
+await page.fill('input[type="password"]', SUMIDA_PW);
+await page.click('button:has-text("ログイン"), input[type="submit"]');
+await page.waitForNavigation({ waitUntil: "networkidle" }).catch(() => {});
     if (page.url().toLowerCase().includes("login")) { console.error("[墨田区] ログイン失敗"); return results; }
     for (let i = 0; i < SUMIDA_COURTS.length; i++) {
       const court = SUMIDA_COURTS[i];
