@@ -1,44 +1,40 @@
-name: 都営・豊島・墨田・千代田 テニスコート空き確認
+name: Check Tennis Courts
 
 on:
   schedule:
-    - cron: "0  9 * * 1-5"   # JST 18:00
-    - cron: "30  9 * * 1-5"  # JST 18:30
-    - cron: "0 10 * * 1-5"   # JST 19:00
-    - cron: "30 10 * * 1-5"  # JST 19:30
-    - cron: "0 11 * * 1-5"   # JST 20:00
-    - cron: "30 11 * * 1-5"  # JST 20:30
-    - cron: "0 12 * * 1-5"   # JST 21:00
-    - cron: "30 12 * * 1-5"  # JST 21:30
-    - cron: "0  0 * * 1-5"   # JST 09:00（朝の先読み）
-  workflow_dispatch:
+    - cron: '0 21 * * *' # 例: 毎日朝6時(JST)に実行
+  workflow_dispatch: # 手動実行用
+
+# 💡 ここに環境変数を追加して、GitHubのアクションをNode 24で強制実行する
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # もし他にシークレット（TOSHIMA_IDなど）をここに書いていればそのまま残す
 
 jobs:
   check-courts:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: 24 # 💡 ここを 20 から 24 に変更
 
-      - run: npm install
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install chromium
 
-      - run: npx playwright install chromium --with-deps
-
-      - name: テニスコート空き確認
+      - name: Run script
         env:
-          LINE_TOKEN:  ${{ secrets.LINE_TOKEN }}
-          SPOREC_ID:   ${{ secrets.SPOREC_ID }}
-          SPOREC_PW:   ${{ secrets.SPOREC_PW }}
-          TOSHIMA_ID:  ${{ secrets.TOSHIMA_ID }}
-          TOSHIMA_PW:  ${{ secrets.TOSHIMA_PW }}
-          SUMIDA_ID:   ${{ secrets.SUMIDA_ID }}
-          SUMIDA_PW:   ${{ secrets.SUMIDA_PW }}
-          CHIYODA_ID:  ${{ secrets.CHIYODA_ID }}
-          CHIYODA_PW:  ${{ secrets.CHIYODA_PW }}
+          SPOREC_ID: ${{ secrets.SPOREC_ID }}
+          SPOREC_PW: ${{ secrets.SPOREC_PW }}
+          TOSHIMA_ID: ${{ secrets.TOSHIMA_ID }}
+          TOSHIMA_PW: ${{ secrets.TOSHIMA_PW }}
+          SUMIDA_ID: ${{ secrets.SUMIDA_ID }}
+          SUMIDA_PW: ${{ secrets.SUMIDA_PW }}
+          CHIYODA_ID: ${{ secrets.CHIYODA_ID }}
+          CHIYODA_PW: ${{ secrets.CHIYODA_PW }}
         run: node src/checker.js
