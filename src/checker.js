@@ -99,12 +99,12 @@ async function checkSporec(browser, targetDates) {
 
 async function checkToshima(browser, targetDates) {
   if (!TOSHIMA_ID || !TOSHIMA_PW) { console.log("[豊島区] 未設定 → スキップ"); return []; }
-  const BASE = "https://yoyaku.toshima.lg.jp";
+  const BASE = "https://www2.pf489.com/toshima/web";
   const ctx = await browser.newContext({ userAgent: "Mozilla/5.0 Chrome/120" });
   const page = await ctx.newPage();
   const results = TOSHIMA_COURTS.map(c => ({ name: c.name, system: "豊島区", vacancies: [] }));
   try {
-    await page.goto(`${BASE}/user/login`);
+    await page.goto(`${BASE}/WEB/`);
     await page.fill('input[type="text"]', TOSHIMA_ID);
     await page.fill('input[type="password"]', TOSHIMA_PW);
     await page.click('button[type="submit"], input[type="submit"]');
