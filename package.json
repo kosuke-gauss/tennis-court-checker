@@ -1,0 +1,16 @@
+{
+  "name": "tennis-court-checker",
+  "version": "1.0.0",
+  "description": "都営テニスコート（猿江・光が丘・有明・日比谷・芝）空き自動チェッカー",
+  "main": "src/checker.js",
+  "scripts": {
+    "check": "node src/checker.js",
+    "test": "echo '環境変数を設定してから npm run check を実行してください'"
+  },
+  "dependencies": {
+    "playwright": "^1.44.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

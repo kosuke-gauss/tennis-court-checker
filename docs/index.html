@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎾 テニスコート空き確認</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg:        #0f1117;
+      --surface:   #181c27;
+      --border:    #252a38;
+      --accent:    #4ade80;
+      --accent-dim:#1a3a28;
+      --warn:      #f59e0b;
+      --muted:     #4b5563;
+      --text:      #e5e7eb;
+      --text-sub:  #6b7280;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Noto Sans JP', sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    /* ── ヘッダー ── */
+    header {
+      max-width: 860px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .header-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .header-title span { color: var(--accent); }
+    .last-updated {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-sub);
+    }
+
+    /* ── フィルターバー ── */
+    .filter-bar {
+      max-width: 860px;
+      margin: 0 auto 24px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ── メインコンテンツ ── */
+    main { max-width: 860px; margin: 0 auto; }
+
+    /* ── ステータスバナー ── */
+    .status-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+      flex-shrink: 0;
+    }
+    .status-dot.loading { background: var(--warn); box-shadow: 0 0 0 3px #3a2e0a; }
+    .status-dot.error   { background: #ef4444;    box-shadow: 0 0 0 3px #2d1111; }
+
+    /* ── エリアセクション ── */
+    .area-section { margin-bottom: 28px; }
+    .area-label {
+      font-size: 0.7rem;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.1em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+
+    /* ── コートカード ── */
+    .court-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .court-card.has-vacancy { border-color: var(--accent); }
+
+    .court-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .court-name {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+    .vacancy-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .vacancy-badge.open {
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+    .vacancy-badge.full {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── 空き日程リスト ── */
+    .vacancy-list {
+      border-top: 1px solid var(--border);
+      padding: 12px 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .vacancy-item {
+      background: var(--accent-dim);
+      border: 1px solid #2d5a3d;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+    .vacancy-item .date {
+      color: var(--text-sub);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      margin-bottom: 2px;
+    }
+    .vacancy-item .slots {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ── 空きゼロ状態 ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-sub);
+      font-size: 0.9rem;
+    }
+
+    /* ── ローディングスケルトン ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface) 25%, var(--border) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+      height: 56px;
+      margin-bottom: 10px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* ── 予約リンク ── */
+    .booking-links {
+      max-width: 860px;
+      margin: 32px auto 0;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .booking-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .booking-link:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    @media (max-width: 500px) {
+      .header-title { font-size: 1.2rem; }
+      .court-header { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-title">🎾 テニスコート<span>空き確認</span></div>
+  <div class="last-updated" id="lastUpdated">読み込み中...</div>
+</header>
+
+<div class="filter-bar" id="filterBar">
+  <button class="filter-btn active" data-filter="all">すべて</button>
+  <button class="filter-btn" data-filter="vacancy">空きあり</button>
+  <button class="filter-btn" data-system="都営スポレク">都営</button>
+  <button class="filter-btn" data-system="豊島区">豊島区</button>
+  <button class="filter-btn" data-system="墨田区">墨田区</button>
+  <button class="filter-btn" data-system="千代田区">千代田区</button>
+</div>
+
+<main id="main">
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+  <div class="skeleton" style="height:40px;opacity:.5"></div>
+</main>
+
+<div class="booking-links">
+  <a class="booking-link" href="https://kouen.sports.metro.tokyo.lg.jp/web/" target="_blank">↗ 都営スポレク予約</a>
+  <a class="booking-link" href="https://yoyaku.toshima.lg.jp" target="_blank">↗ 豊島区予約</a>
+  <a class="booking-link" href="https://yoyaku03.city.sumida.lg.jp/user/Home" target="_blank">↗ 墨田区予約</a>
+  <a class="booking-link" href="https://yoyaku-sotobori.jp/" target="_blank">↗ 千代田区（外濠）予約</a>
+</div>
+
+<script>
+const SYSTEMS = ["都営スポレク", "豊島区", "墨田区", "千代田区"];
+let allData = null;
+let activeFilter = "all";
+let activeSystem = null;
+
+// GitHub Pages と同じリポジトリのデータJSONを取得
+async function loadData() {
+  const statusEl = document.getElementById("lastUpdated");
+  const mainEl = document.getElementById("main");
+
+  try {
+    // checker.js が生成した results.json を読み込む
+    const res = await fetch("results.json?t=" + Date.now());
+    if (!res.ok) throw new Error("results.json が見つかりません");
+    allData = await res.json();
+
+    const updatedAt = new Date(allData.updatedAt);
+    statusEl.textContent = `最終更新: ${updatedAt.toLocaleString("ja-JP")}`;
+
+    render();
+  } catch (e) {
+    statusEl.textContent = "データ取得失敗";
+    mainEl.innerHTML = `
+      <div class="status-banner">
+        <div class="status-dot error"></div>
+        <span>データを読み込めませんでした。GitHub Actionsが一度も実行されていない可能性があります。<br>Actions タブ → 手動実行（Run workflow）してください。</span>
+      </div>`;
+  }
+}
+
+function render() {
+  const mainEl = document.getElementById("main");
+  if (!allData) return;
+
+  // フィルタ適用
+  let courts = allData.courts;
+  if (activeSystem) {
+    courts = courts.filter(c => c.system === activeSystem);
+  }
+  if (activeFilter === "vacancy") {
+    courts = courts.filter(c => c.vacancies.length > 0);
+  }
+
+  // 空きあり件数
+  const vacancyCount = allData.courts.filter(c => c.vacancies.length > 0).length;
+
+  // システム別にグループ化
+  const grouped = {};
+  for (const c of courts) {
+    if (!grouped[c.system]) grouped[c.system] = [];
+    grouped[c.system].push(c);
+  }
+
+  let html = `
+    <div class="status-banner">
+      <div class="status-dot${vacancyCount === 0 ? '' : ''}"></div>
+      <span>${vacancyCount > 0
+        ? `<strong style="color:var(--accent)">${vacancyCount}コート</strong>に空きがあります（平日18時以降）`
+        : "現在、平日18時以降の空きはありません"
+      }</span>
+    </div>`;
+
+  if (Object.keys(grouped).length === 0) {
+    html += `<div class="empty-state">条件に一致するコートがありません</div>`;
+  } else {
+    for (const system of SYSTEMS) {
+      if (!grouped[system]) continue;
+      html += `<div class="area-section" data-system="${system}">`;
+      html += `<div class="area-label">${system}</div>`;
+      for (const court of grouped[system]) {
+        const hasVacancy = court.vacancies.length > 0;
+        html += `<div class="court-card${hasVacancy ? " has-vacancy" : ""}">`;
+        html += `<div class="court-header">
+          <div class="court-name">${court.name}</div>
+          <div class="vacancy-badge ${hasVacancy ? "open" : "full"}">${hasVacancy ? `${court.vacancies.length}日空き` : "空きなし"}</div>
+        </div>`;
+        if (hasVacancy) {
+          html += `<div class="vacancy-list">`;
+          for (const v of court.vacancies) {
+            html += `<div class="vacancy-item">
+              <div class="date">${v.date}</div>
+              <div class="slots">${v.slots.join(" / ")}</div>
+            </div>`;
+          }
+          html += `</div>`;
+        }
+        html += `</div>`;
+      }
+      html += `</div>`;
+    }
+  }
+
+  mainEl.innerHTML = html;
+}
+
+// フィルターボタン
+document.getElementById("filterBar").addEventListener("click", e => {
+  const btn = e.target.closest(".filter-btn");
+  if (!btn) return;
+
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  if (btn.dataset.filter) {
+    activeFilter = btn.dataset.filter;
+    activeSystem = null;
+  } else if (btn.dataset.system) {
+    activeFilter = "all";
+    activeSystem = btn.dataset.system;
+  }
+  render();
+});
+
+loadData();
+</script>
+</body>
+</html>
