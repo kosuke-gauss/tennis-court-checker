@@ -181,13 +181,12 @@ async function checkChiyoda(browser, targetDates) {
   const results = CHIYODA_COURTS.map(c => ({ name: c.name, system: "千代田区", vacancies: [] }));
   try {
     await page.goto(`${BASE}/`);
-    const loginLink = page.locator('a[href*="login"], a:has-text("ログイン")').first();
-    if (await loginLink.count() > 0) await loginLink.click();
-    await page.waitForLoadState("networkidle");
-    await page.fill('input[type="text"], input[name*="id"], input[name*="user"]', CHIYODA_ID);
-    await page.fill('input[type="password"]', CHIYODA_PW);
-    await page.click('button[type="submit"], input[type="submit"]');
-    await page.waitForNavigation({ waitUntil: "networkidle" }).catch(() => {});
+await page.waitForLoadState("networkidle");
+// 利用者番号・パスワード欄を直接指定
+await page.fill('input[name="userId"]', CHIYODA_ID);
+await page.fill('input[name="password"]', CHIYODA_PW);
+await page.click('input[type="submit"][value*="ログイン"], input[name*="login"], button:has-text("ログイン")');
+await page.waitForNavigation({ waitUntil: "networkidle" }).catch(() => {});
     if (page.url().toLowerCase().includes("login")) { console.error("[千代田区] ログイン失敗"); return results; }
     for (let i = 0; i < CHIYODA_COURTS.length; i++) {
       const court = CHIYODA_COURTS[i];
