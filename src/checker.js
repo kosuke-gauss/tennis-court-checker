@@ -32,9 +32,9 @@ const SUMIDA_COURTS = [
   { name: "墨田・東墨田",         facilityCode: "TC06" },
 ];
 const CHIYODA_COURTS = [
-  { name: "千代田・外堀公園Aコート",  facilityCode: "A"  },
-  { name: "千代田・外堀公園Bコート",  facilityCode: "B"  },
-  { name: "千代田・外堀公園ABコート", facilityCode: "AB" },
+  { name: "千代田・外濠公園Aコート",  facilityCode: "A"  },
+  { name: "千代田・外濠公園Bコート",  facilityCode: "B"  },
+  { name: "千代田・外濠公園ABコート", facilityCode: "AB" },
 ];
 
 const TARGET_SLOTS = ["18:00","18:30","19:00","19:30","20:00","20:30","21:00","21:30"];
